@@ -1,5 +1,222 @@
 @import "tailwindcss";
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
+@theme {
+  /* ── Core brand palette — luxury dark / crimson ─────────────────────────
+     #100c08  primary dark foundation  (ink)
+     #95122c  crimson accent           (brand red)                        */
+  --color-cream:        #100c08;   /* primary page background             */
+  --color-sand:         #1e1712;   /* elevated surface / card             */
+  --color-terra:        #95122c;   /* crimson — primary accent            */
+  --color-terra-dark:   #6b0d20;   /* dark crimson — pressed / shadow     */
+  --color-terra-light:  #c4183a;   /* bright crimson — active hover       */
+  --color-amber:        #c9a96e;   /* warm gold — luxury highlight        */
+  --color-brown:        #f0ece8;   /* primary text  (light on dark)       */
+  --color-brown-mid:    #a89880;   /* secondary / muted text              */
+  --color-brown-light:  #5e4e44;   /* disabled / placeholder text         */
+
+  /* ── Extended surface tokens ─────────────────────────────────────────── */
+  --color-surface:      #1e1712;   /* same as sand — card bg              */
+  --color-surface-2:    #261e16;   /* input bg, hover surface             */
+  --color-border:       #2e2218;   /* default border                      */
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-sans:  var(--font-heebo), system-ui, sans-serif;
+  --font-serif: var(--font-frank), Georgia, serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-brown);
+  }
+
+  /* Native date / text / tel inputs: force dark rendering so the
+     OS-rendered calendar picker also uses a dark colour scheme.        */
+  input[type="date"],
+  input[type="text"],
+  input[type="tel"] {
+    color-scheme: dark;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.65) sepia(0.1);
+    cursor: pointer;
+  }
+}
+
+/* ─── Scroll-reveal animation ────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.reveal { opacity: 0; }
+.reveal.visible { animation: fadeUp 0.55s ease-out both; }
+
+/* Stagger helpers */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+
+/* ─── Premium crimson button ─────────────────────────────────────────────
+   Usage:  className="btn-crimson text-white px-… py-… rounded-…"
+   Provides:  gradient fill  ·  ambient glow  ·  lift on hover           */
+.btn-crimson {
+  background: linear-gradient(135deg, #95122c 0%, #7a0f24 100%);
+  box-shadow: 0 4px 20px rgba(149, 18, 44, 0.35), 0 1px 4px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.22s ease, transform 0.18s ease, background 0.2s ease;
+}
+.btn-crimson:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c4183a 0%, #95122c 100%);
+  box-shadow: 0 6px 32px rgba(149, 18, 44, 0.55), 0 2px 8px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+.btn-crimson:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(149, 18, 44, 0.35);
+}
+.btn-crimson:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Dark glass card ────────────────────────────────────────────────────
+   Adds depth and subtle crimson halo on hover.                          */
+.card-glass {
+  background: rgba(30, 23, 18, 0.90);
+  border: 1px solid rgba(46, 34, 24, 0.8);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+.card-glass:hover {
+  border-color: rgba(149, 18, 44, 0.35);
+  box-shadow:
+    0 8px 40px rgba(149, 18, 44, 0.14),
+    0 2px 12px rgba(0, 0, 0, 0.45);
+  transform: translateY(-2px);
+}
+
+/* ─── Input dark ─────────────────────────────────────────────────────────
+   Replace bg-white + border-sand on form inputs.                        */
+.input-dark {
+  background-color: var(--color-surface-2);
+  border-color: var(--color-border);
+  color: var(--color-brown);
+}
+.input-dark:focus {
+  border-color: var(--color-terra);
+  box-shadow: 0 0 0 3px rgba(149, 18, 44, 0.18);
+  outline: none;
+}
+.input-dark::placeholder {
+  color: var(--color-brown-light);
+}
+
+/* ─── Ambient section glow — radial crimson bloom at bottom ─────────────  */
+.section-glow::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 45% at 50% 110%,
+    rgba(149, 18, 44, 0.09) 0%,
+    transparent 70%
+  );
+}
+
+/* ─── Hero dark-glass CTA hover ──────────────────────────────────────────────
+   Applied to the scene-04 pill button in ScrollVideoHero.
+   Lifts, brightens the border, and adds a faint crimson glow on hover.       */
+.hero-cta-btn {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+.hero-cta-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  background: rgba(30,20,14,0.82) !important;
+  border-color: rgba(255,255,255,0.28) !important;
+  box-shadow: 0 6px 28px rgba(16,12,8,0.55), 0 0 0 1px rgba(149,18,44,0.18);
+}
+.hero-cta-btn:active {
+  transform: translateY(0) scale(1);
+}
+
+/* ─── Featured service card — ambient crimson glow pulse ─────────────────────
+   Applied via .card-featured class. Pulses border + glow every 4 s.         */
+@keyframes featuredGlow {
+  0%, 100% {
+    box-shadow   : 0 0 28px rgba(149,18,44,0.18), 0 16px 56px rgba(0,0,0,0.52);
+    border-color : rgba(149,18,44,0.26);
+  }
+  50% {
+    box-shadow   : 0 0 52px rgba(149,18,44,0.34), 0 20px 72px rgba(0,0,0,0.58);
+    border-color : rgba(149,18,44,0.46);
+  }
+}
+.card-featured {
+  animation: featuredGlow 4s ease-in-out infinite;
+}
+.card-featured:hover {
+  animation    : none;
+  box-shadow   : 0 0 64px rgba(149,18,44,0.44), 0 20px 80px rgba(0,0,0,0.62) !important;
+  border-color : rgba(149,18,44,0.60) !important;
+  transform    : translateY(-2px);
+  transition   : transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+/* ─── Services stagger reveal ─────────────────────────────────────────────────
+   Items start hidden; JS (IntersectionObserver) sets opacity/transform via
+   setTimeout stagger so every card enters on a slight delay.                */
+[data-stagger] {
+  opacity   : 0;
+  transform : translateY(22px);
+  transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+}
+
+/* ─── CTA amber shimmer — sweeps once across the button on hover ─────────────
+   Add class="cta-shine" to any element.
+   The ::after pseudo creates a light-gold highlight that travels left→right.  */
+.cta-shine {
+  position: relative;
+  overflow: hidden;
+}
+.cta-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent       35%,
+    rgba(201,169,110,0.22) 50%,
+    transparent       65%
+  );
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+.cta-shine:hover::after {
+  animation: ctaShimmer 0.55s ease forwards;
+}
+@keyframes ctaShimmer {
+  from { transform: translateX(-110%); }
+  to   { transform: translateX(110%);  }
+}
+
+/* ─── Custom cursor: hide native on hover-capable (desktop) devices ─────────
+   The CustomCursor component renders only after JS hydrates; this CSS rule
+   suppresses the native cursor at the same time so there's no flash of
+   default arrow.  Inputs keep their native text cursor for usability.      */
+@media (hover: hover) and (pointer: fine) {
+  * { cursor: none !important; }
+  input, textarea, select { cursor: text !important; }
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

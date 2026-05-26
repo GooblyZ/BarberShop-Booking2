@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# מספרה — מערכת הזמנת תורים
 
-## Getting Started
+מערכת הזמנת תורים למספרה, בנויה עם Next.js, React, TypeScript, Tailwind CSS ו-SQLite.
 
-First, run the development server:
+---
+
+## דרישות מקדימות
+
+- Node.js 18 ומעלה
+- npm
+
+---
+
+## התקנה והרצה מקומית
 
 ```bash
+# 1. התקנת תלויות
+npm install
+
+# 2. הגדרת משתני סביבה
+cp .env.example .env.local
+# ערכו את .env.local והגדירו סיסמת מנהל
+
+# 3. הרצת שרת פיתוח
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+האפליקציה תהיה זמינה בכתובת [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## משתני סביבה
 
-## Learn More
+| משתנה | תיאור | חובה |
+|-------|-------|------|
+| `ADMIN_PASSWORD` | סיסמת כניסה ראשונית לממשק הניהול | כן |
 
-To learn more about Next.js, take a look at the following resources:
+ניתן לשנות את הסיסמה לאחר הכניסה דרך ממשק הניהול (הגדרות → שינוי סיסמה).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## בסיס הנתונים
 
-## Deploy on Vercel
+- הנתונים נשמרים בקובץ SQLite בנתיב `data/appointments.db`
+- הקובץ נוצר אוטומטית בהרצה הראשונה — אין צורך בהגדרה ידנית
+- כל הטבלאות נוצרות אוטומטית אם הן חסרות
+- קובץ ה-DB **אינו** מתועד ב-Git (מוגדר ב-`.gitignore`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**גיבוי:** העתיקו את הקובץ `data/appointments.db` לגיבוי ידני.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## מבנה האפליקציה
+
+```
+app/
+  page.tsx              # דף הזמנת תורים ללקוחות
+  admin/
+    page.tsx            # ממשק ניהול
+    login/page.tsx      # דף כניסת מנהל
+  api/
+    appointments/       # ניהול תורים
+    availability/       # בדיקת זמינות
+    services/           # ניהול שירותים
+    settings/           # הגדרות עסק
+    days-off/           # ימי חופש
+    blocked-ranges/     # טווחי זמן חסומים
+    admin/              # כניסה, יציאה, שינוי סיסמה
+lib/
+  db.ts                 # חיבור SQLite ואתחול טבלאות
+  services.ts           # פונקציות עזר ווולידציה
+  auth.ts               # אימות מנהל
+proxy.ts                # הגנה על נתיבי /admin
+```
+
+---
+
+## פריסה לייצור
+
+### Vercel (מומלץ)
+
+1. דחפו את הקוד ל-GitHub
+2. חברו את הריפו ב-[vercel.com](https://vercel.com)
+3. הגדירו `ADMIN_PASSWORD` תחת Project Settings → Environment Variables
+4. פרסו
+
+> **שימו לב:** Vercel משתמש ב-serverless functions — SQLite שמור בתיקייה זמנית ולא קבועה. לפריסת ייצור עם שמירת נתונים, השתמשו ב-VPS (Railway, Render, DigitalOcean) עם persistent storage.
+
+### VPS / שרת עצמאי
+
+```bash
+npm run build
+npm start
+```
+
+הגדירו משתני סביבה בשרת ווודאו שתיקיית `data/` כתיבה ניתנת על-ידי תהליך Node.
+
+---
+
+## ממשק הניהול
+
+כתובת: [http://localhost:3000/admin](http://localhost:3000/admin)
+
+- **תורים** — צפייה, סינון, ביטול, סימון כהושלם, הוספת הערות
+- **שירותים** — הוספה, עריכה, הפעלה/השבתה
+- **הגדרות** — שעות עבודה, ימי עבודה, ימי חופש, שעות חסומות, שינוי סיסמה

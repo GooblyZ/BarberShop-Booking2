@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const dayOff        = !!db.prepare('SELECT 1 FROM days_off WHERE date = ?').get(date);
 
   const booked = db.prepare(
-    'SELECT * FROM appointments WHERE date = ? ORDER BY time'
+    "SELECT * FROM appointments WHERE date = ? AND status = 'confirmed' ORDER BY time"
   ).all(date) as Appointment[];
 
   const blockedRanges = db.prepare(

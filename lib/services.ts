@@ -1,20 +1,15 @@
 export interface Service {
-  id: string;
+  id: number;
   name: string;
-  duration: number; // minutes
+  duration: number;
+  price: number | null;
+  active: number;
+  sort_order: number;
 }
 
-export const SERVICES: Service[] = [
-  { id: 'haircut',       name: 'תספורת',        duration: 30 },
-  { id: 'beard',         name: 'עיצוב זקן',      duration: 20 },
-  { id: 'haircut-beard', name: 'תספורת + זקן',   duration: 50 },
-];
+export const SLOT_STEP = 30;
 
-export const OPEN_HOUR  = 9;
-export const CLOSE_HOUR = 18;
-export const SLOT_STEP  = 30;
-
-export function generateSlots(openHour = OPEN_HOUR, closeHour = CLOSE_HOUR): string[] {
+export function generateSlots(openHour = 9, closeHour = 18): string[] {
   const slots: string[] = [];
   for (let h = openHour; h < closeHour; h++) {
     for (let m = 0; m < 60; m += SLOT_STEP) {
@@ -36,7 +31,7 @@ export function hasOverlap(
   return aStart < bStart + bDuration && bStart < aStart + aDuration;
 }
 
-// Accepts Israeli mobile (05X/07X, 10 digits) and landline (02-09, 9-10 digits)
+// Israeli mobile only: 05X-XXXXXXX, exactly 10 digits
 export function isValidIsraeliPhone(phone: string): boolean {
-  return /^0[2-9]\d{7,8}$/.test(phone);
+  return /^05\d{8}$/.test(phone);
 }

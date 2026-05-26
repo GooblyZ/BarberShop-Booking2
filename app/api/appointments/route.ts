@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { SERVICES, timeToMinutes, hasOverlap, isValidIsraeliPhone } from '@/lib/services';
+import { timeToMinutes, hasOverlap, isValidIsraeliPhone } from '@/lib/services';
+import type { Service } from '@/lib/services';
+import crypto from 'crypto';
 
 export interface Appointment {
   id: number;
@@ -11,6 +13,10 @@ export interface Appointment {
   time: string;
   duration: number;
   created_at: string;
+  status: string;
+  note: string | null;
+  token: string;
+  cancel_reason: string | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -29,7 +35,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, phone, serviceId, date, time } = body;
+  const { name, phone, serviceId, date, time, note } = body;
 
   if (!name || !phone || !serviceId || !date || !time) {
     return NextResponse.json({ error: 'שדות חסרים' }, { status: 400 });
@@ -41,12 +47,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'מספר טלפון לא תקין (לדוגמה: 0501234567)' }, { status: 400 });
   }
 
-  const service = SERVICES.find(s => s.id === serviceId);
+  const db = getDb();
+  const service = db.prepare('SELECT * FROM services WHERE id = ? AND active = 1').get(Number(serviceId)) as Service | undefined;
   if (!service) {
     return NextResponse.json({ error: 'שירות לא תקין' }, { status: 400 });
   }
-
-  const db        = getDb();
   const settingsRow = db.prepare('SELECT open_hour, close_hour, working_days FROM settings WHERE id = 1').get() as any;
   const openMins  = settingsRow.open_hour  * 60;
   const closeMins = settingsRow.close_hour * 60;
@@ -84,17 +89,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Existing appointments check
-  const existing = db.prepare('SELECT * FROM appointments WHERE date = ?').all(date) as Appointment[];
+  // Existing appointments check (skip cancelled)
+  const existing = db.prepare(
+    "SELECT * FROM appointments WHERE date = ? AND status = 'confirmed'"
+  ).all(date) as Appointment[];
   for (const appt of existing) {
     if (hasOverlap(newStart, newDuration, timeToMinutes(appt.time), appt.duration)) {
       return NextResponse.json({ error: 'השעה כבר תפוסה' }, { status: 409 });
     }
   }
 
+  const token = crypto.randomBytes(16).toString('hex');
   const result = db.prepare(
-    'INSERT INTO appointments (name, phone, service, date, time, duration) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(name, digitsOnly, service.name, date, time, newDuration);
+    'INSERT INTO appointments (name, phone, service, date, time, duration, token, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(name, digitsOnly, service.name, date, time, newDuration, token, note || null);
 
-  return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
+  return NextResponse.json({ id: result.lastInsertRowid, token }, { status: 201 });
 }
