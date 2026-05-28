@@ -114,6 +114,7 @@ export default function HomePage() {
   const [loading,      setLoading]      = useState(false);
   const [bookingToken, setBookingToken] = useState('');
   const [linkCopied,   setLinkCopied]   = useState(false);
+  const [inBookingView, setInBookingView] = useState(false);
 
   const service = services.find(s => s.id === serviceId);
   const today   = new Date().toISOString().split('T')[0];
@@ -142,6 +143,17 @@ export default function HomePage() {
     if (!date) { setAvailability(null); return; }
     fetch(`/api/availability?date=${date}`).then(r => r.json()).then(setAvailability);
   }, [date]);
+
+  useEffect(() => {
+    const el = bookingRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => setInBookingView(e.isIntersecting),
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   /* ── Slot computation ───────────────────────────────────────────────── */
   const availableSlots: string[] = (() => {
@@ -318,6 +330,36 @@ export default function HomePage() {
       {/* ─────────────────────────── SCROLL VIDEO HERO ──────────────── */}
       <ScrollVideoHero />
 
+      {/* ──────────────────────── SOCIAL PROOF BAND ─────────────────── */}
+      <section
+        ref={statsRef}
+        className="reveal bg-sand"
+        style={{ borderTop: '1px solid rgba(149,18,44,0.14)', borderBottom: '1px solid rgba(149,18,44,0.10)' }}
+      >
+        <div className="max-w-4xl mx-auto px-5 py-10">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            {[
+              { target: 500, suffix: '+', label: 'לקוחות מרוצים' },
+              { target: 10,  suffix: '+', label: 'שנות ניסיון'    },
+              { target: 49,  suffix: '',  label: 'דירוג ממוצע',  star: true },
+            ].map(({ target, suffix, label, star }) => (
+              <div key={label} className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-serif font-black text-2xl sm:text-3xl text-brown">
+                    <AnimCounter target={target} suffix={star ? '' : suffix} />
+                    {star && <span>.9</span>}
+                  </span>
+                  {star && <StarIcon className="w-5 h-5 text-amber flex-shrink-0" />}
+                </div>
+                <p className="text-brown-light text-[10px] sm:text-xs uppercase tracking-widest leading-tight">
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ──────────────────────── SERVICES SECTION ────────────────────── */}
       <section id="services" className="py-28 bg-cream relative overflow-hidden">
 
@@ -336,11 +378,11 @@ export default function HomePage() {
         {/* Editorial background watermarks */}
         <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none select-none">
           <span className="absolute font-serif font-black leading-none text-white"
-            style={{ fontSize: 'clamp(88px,20vw,300px)', opacity: 0.026, top: '-2%', insetInlineEnd: '-3%', letterSpacing: '0.06em' }}>
+            style={{ fontSize: 'clamp(88px,20vw,260px)', opacity: 0.018, top: '-2%', insetInlineEnd: '-3%', letterSpacing: '0.06em' }}>
             CRAFT
           </span>
           <span className="absolute font-serif font-black leading-none text-white"
-            style={{ fontSize: 'clamp(52px,10vw,148px)', opacity: 0.018, bottom: '6%', insetInlineStart: '-1%', letterSpacing: '0.14em' }}>
+            style={{ fontSize: 'clamp(52px,10vw,130px)', opacity: 0.013, bottom: '6%', insetInlineStart: '-1%', letterSpacing: '0.14em' }}>
             STYLE
           </span>
         </div>
@@ -349,9 +391,9 @@ export default function HomePage() {
         <div ref={servicesRef} className="reveal max-w-6xl mx-auto px-5 mb-16 relative z-10">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-7">
             <div>
-              <span className="text-terra text-[10px] font-bold uppercase tracking-[0.26em] block mb-4">מה אנחנו מציעים</span>
-              <h2 className="font-serif font-black leading-[1.05] text-brown"
-                style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)' }}>
+              <span className="text-terra text-[10px] font-bold uppercase tracking-[0.22em] block mb-4">מה אנחנו מציעים</span>
+              <h2 className="font-serif font-black leading-[1.08] text-brown"
+                style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.4rem)' }}>
                 השירותים<br />
                 <em className="not-italic text-terra">שלנו</em>
               </h2>
@@ -495,6 +537,86 @@ export default function HomePage() {
       </section>
 
 
+      {/* ──────────────────────── HOW IT WORKS ──────────────────────── */}
+      <section className="py-20 bg-sand relative overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 100%, rgba(149,18,44,0.06) 0%, transparent 70%)' }}
+        />
+        <div className="max-w-4xl mx-auto px-5 relative z-10">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <span className="text-terra text-[10px] font-bold uppercase tracking-[0.22em] block mb-3">
+              תהליך הזמנה
+            </span>
+            <h2 className="font-serif font-black text-3xl sm:text-4xl text-brown">
+              שלושה צעדים פשוטים
+            </h2>
+          </div>
+
+          {/* Steps */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 relative">
+            {/* Connector line — desktop only */}
+            <div
+              aria-hidden="true"
+              className="hidden sm:block absolute top-8 inset-x-[16.666%]"
+              style={{ height: '1px', background: 'linear-gradient(to left, transparent, rgba(149,18,44,0.3), rgba(149,18,44,0.3), transparent)' }}
+            />
+
+            {[
+              {
+                n: '01',
+                title: 'בחרו שירות',
+                desc:  'בחרו מתוך מגוון השירותים שלנו — תספורת, עיצוב זקן ועוד',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"/>
+                  </svg>
+                ),
+              },
+              {
+                n: '02',
+                title: 'בחרו תאריך ושעה',
+                desc:  'ראו בזמן אמת אילו מועדים פנויים ובחרו את הזמן הנוח לכם',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
+                  </svg>
+                ),
+              },
+              {
+                n: '03',
+                title: 'אשרו ובואו',
+                desc:  'הכניסו שם וטלפון, אשרו את התור — ופגישו אותנו בזמן',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  </svg>
+                ),
+              },
+            ].map(({ n, title, desc, icon }) => (
+              <div key={n} className="flex flex-col items-center text-center relative">
+                {/* Circle */}
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-5 relative z-10 flex-shrink-0"
+                  style={{
+                    background: 'rgba(149,18,44,0.10)',
+                    border: '1px solid rgba(149,18,44,0.28)',
+                  }}
+                >
+                  <span className="text-terra">{icon}</span>
+                </div>
+                <span className="text-terra text-[9px] font-bold uppercase tracking-[0.22em] mb-1">{n}</span>
+                <h3 className="font-serif font-bold text-lg text-brown mb-2">{title}</h3>
+                <p className="text-brown-mid text-sm leading-relaxed max-w-[200px]">{desc}</p>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
       {/* ──────────────────────────── CTA BAND ───────────────────────── */}
       <section
         className="py-20 relative overflow-hidden"
@@ -549,7 +671,7 @@ export default function HomePage() {
         <div className="max-w-lg mx-auto px-5">
 
           <div ref={bookHeadRef} className="reveal text-center mb-10">
-            <span className="text-terra text-xs font-bold uppercase tracking-[0.18em]">קביעת תור</span>
+            <span className="text-terra text-[10px] font-bold uppercase tracking-[0.22em]">קביעת תור</span>
             <h2 className="font-serif font-black text-4xl text-brown mt-2 mb-2">הזמינו תור</h2>
             <p className="text-brown-mid text-sm">תהליך פשוט, מהיר ונוח לחלוטין</p>
           </div>
@@ -593,7 +715,7 @@ export default function HomePage() {
 
           {/* Booking card */}
           <div
-            className="bg-sand rounded-3xl p-8"
+            className="bg-sand rounded-3xl p-5 sm:p-8"
             style={{
               border: '1px solid rgba(149,18,44,0.14)',
               boxShadow: '0 8px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(149,18,44,0.07)',
@@ -807,6 +929,11 @@ export default function HomePage() {
                     {loading ? 'שולח...' : 'אשרו תור'}
                   </button>
                 </div>
+
+                {/* Trust micro-copy */}
+                <p className="text-center text-brown-light text-xs mt-4 leading-relaxed">
+                  ניתן לבטל את התור בכל עת דרך הקישור שיישלח אליכם
+                </p>
               </div>
             )}
 
@@ -898,6 +1025,25 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ──────────────────── STICKY MOBILE CTA ────────────────────── */}
+      {/* Visible only on mobile, only when scrolled past hero, hidden when booking section in view */}
+      <div
+        aria-hidden={!scrolled || inBookingView}
+        className={`sm:hidden fixed bottom-0 inset-x-0 z-40 px-4 pb-4 pt-3 transition-all duration-300 ${
+          scrolled && !inBookingView
+            ? 'translate-y-0 opacity-100 pointer-events-auto'
+            : 'translate-y-full opacity-0 pointer-events-none'
+        }`}
+        style={{ background: 'linear-gradient(to top, rgba(16,12,8,0.97) 60%, transparent)' }}
+      >
+        <button
+          onClick={() => scrollToBooking()}
+          className="btn-crimson w-full py-4 rounded-2xl text-white font-bold text-base"
+        >
+          הזמינו תור
+        </button>
+      </div>
 
       {/* ──────────────────────────── FOOTER ─────────────────────────── */}
       <footer

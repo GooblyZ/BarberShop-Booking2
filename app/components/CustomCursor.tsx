@@ -38,9 +38,9 @@ type Mode = 'default' | 'button' | 'link' | 'hero' | 'card' | 'input';
 // ── Tuning constants ──────────────────────────────────────────────────────────
 const R_LERP   = 0.10;   // ring interpolation factor  (lower = dreamier)
 const D_LERP   = 0.65;   // dot  interpolation factor  (higher = snappier)
-const TRAIL_N  = 5;      // number of trail echo rings
-const SPARK_N  = 6;      // spark particle pool size
-const SPARK_MS = 380;    // minimum ms between hero sparks
+const TRAIL_N  = 4;      // number of trail echo rings
+const SPARK_N  = 4;      // spark particle pool size
+const SPARK_MS = 520;    // minimum ms between hero sparks
 
 // ── Ring style map ────────────────────────────────────────────────────────────
 // Each entry drives direct style writes in the RAF tick.
@@ -266,7 +266,7 @@ export default function CustomCursor() {
         const frac = 1 - (i + 1) / TRAIL_N;          // 1 → 0 oldest
         const sz   = 2 + frac * 9;
         el.style.transform = `translate3d(${tx}px,${ty}px,0) translate(-50%,-50%)`;
-        el.style.opacity   = mode === 'input' ? '0' : (frac * 0.22).toFixed(3);
+        el.style.opacity   = mode === 'input' ? '0' : (frac * 0.16).toFixed(3);
         el.style.width     = `${sz.toFixed(1)}px`;
         el.style.height    = `${sz.toFixed(1)}px`;
       });
@@ -414,7 +414,7 @@ export default function CustomCursor() {
           height      : '5px',
           borderRadius: '50%',
           background  : '#e8183a',
-          boxShadow   : '0 0 8px rgba(149,18,44,0.90), 0 0 16px rgba(149,18,44,0.40)',
+          boxShadow   : '0 0 6px rgba(149,18,44,0.75), 0 0 12px rgba(149,18,44,0.28)',
           pointerEvents: 'none',
           willChange  : 'transform',
           transition  : 'opacity 0.15s ease',

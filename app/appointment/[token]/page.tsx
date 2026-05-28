@@ -19,10 +19,23 @@ function formatDateHe(dateStr: string) {
   });
 }
 
+function ScissorsIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="6" cy="6" r="3"/>
+      <circle cx="6" cy="18" r="3"/>
+      <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+      <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+      <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+    </svg>
+  );
+}
+
 export default function AppointmentStatusPage() {
   const { token } = useParams<{ token: string }>();
-  const [appt, setAppt]       = useState<PublicAppointment | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [appt, setAppt]         = useState<PublicAppointment | null>(null);
+  const [loading, setLoading]   = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -46,146 +59,208 @@ export default function AppointmentStatusPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-400">טוען...</p>
+      <main className="min-h-screen flex items-center justify-center bg-cream">
+        <p className="text-brown-mid">טוען...</p>
       </main>
     );
   }
 
   if (notFound || !appt) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <main className="min-h-screen flex items-center justify-center bg-cream px-4" dir="rtl">
         <div className="text-center">
-          <div className="text-5xl mb-4">🔍</div>
-          <h1 className="text-xl font-bold mb-2">תור לא נמצא</h1>
-          <p className="text-gray-500 text-sm mb-6">הקישור אינו תקין או שהתור הוסר</p>
-          <a href="/" className="text-blue-600 hover:underline text-sm">חזרה לדף הבית</a>
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-sand border border-border
+            flex items-center justify-center">
+            <svg className="w-7 h-7 text-brown-mid" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803M10.5 7.5v6m3-3h-6" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-brown mb-2">תור לא נמצא</h1>
+          <p className="text-brown-mid text-sm mb-6">הקישור אינו תקין או שהתור הוסר</p>
+          <a href="/" className="text-terra hover:text-terra-light text-sm transition-colors">
+            ← חזרה לדף הבית
+          </a>
         </div>
       </main>
     );
   }
 
-  const isConfirmed  = appt.status === 'confirmed';
-  const isCancelledAdmin = appt.status === 'cancelled_by_admin';
+  const isConfirmed        = appt.status === 'confirmed';
+  const isCancelledAdmin   = appt.status === 'cancelled_by_admin';
   const isCancelledCustomer = appt.status === 'cancelled_by_customer';
-  const isCancelled  = isCancelledAdmin || isCancelledCustomer;
-  const isCompleted  = appt.status === 'completed';
+  const isCompleted        = appt.status === 'completed';
 
   return (
-    <main className="max-w-md mx-auto px-4 py-10" dir="rtl">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-1">✂️ מספרה</h1>
-        <p className="text-gray-500 text-sm">סטטוס התור שלך</p>
-      </div>
+    <main className="min-h-screen bg-cream py-12 px-4" dir="rtl">
+      <div className="max-w-md mx-auto">
 
-      {/* Status banner */}
-      {isConfirmed && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-center">
-          <div className="text-3xl mb-1">✅</div>
-          <p className="font-bold text-blue-800 text-lg">התור מאושר</p>
-          <p className="text-blue-600 text-sm">נתראה בקרוב!</p>
+        {/* Brand header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2.5 mb-3">
+            <ScissorsIcon className="w-6 h-6 text-terra" />
+            <span className="font-serif text-2xl text-brown tracking-wide">פלורנטין</span>
+          </div>
+          <p className="text-brown-light text-xs tracking-widest uppercase">סטטוס התור שלך</p>
         </div>
-      )}
 
-      {isCancelledAdmin && (
-        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-6 text-center">
-          <div className="text-3xl mb-1">❌</div>
-          <p className="font-bold text-red-700 text-lg">התור שלך בוטל</p>
-          <p className="text-red-500 text-sm mt-1">התור בוטל על ידי העסק</p>
-          {appt.cancel_reason && (
-            <div className="mt-3 bg-red-100 rounded-lg p-3 text-sm text-red-700">
-              <span className="font-medium">סיבת הביטול: </span>{appt.cancel_reason}
+        {/* ── Status banner: confirmed ── */}
+        {isConfirmed && (
+          <div className="rounded-2xl p-5 mb-6 text-center border"
+            style={{ background: 'rgba(149,18,44,0.10)', borderColor: 'rgba(149,18,44,0.28)' }}>
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(149,18,44,0.18)' }}>
+              <svg className="w-5 h-5 text-terra-light" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
             </div>
-          )}
-          <div className="mt-4">
-            <a href="/" className="inline-block px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
-              הזמינו תור חדש
-            </a>
+            <p className="font-bold text-brown text-lg">התור מאושר</p>
+            <p className="text-brown-mid text-sm mt-1">נתראה בקרוב!</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {isCancelledCustomer && (
-        <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 mb-6 text-center">
-          <div className="text-3xl mb-1">🚫</div>
-          <p className="font-bold text-gray-700 text-lg">ביטלת את התור</p>
-          <div className="mt-4">
-            <a href="/" className="inline-block px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-              הזמינו תור חדש
-            </a>
-          </div>
-        </div>
-      )}
-
-      {isCompleted && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-center">
-          <div className="text-3xl mb-1">⭐</div>
-          <p className="font-bold text-green-800 text-lg">התור הושלם</p>
-          <p className="text-green-600 text-sm mt-1">תודה שביקרת אצלנו!</p>
-          <div className="mt-4">
-            <a href="/" className="inline-block px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
-              הזמינו תור נוסף
-            </a>
-          </div>
-        </div>
-      )}
-
-      {/* Appointment details */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mb-6">
-        <p className="text-xs text-gray-400 font-medium mb-3 uppercase tracking-wide">פרטי התור</p>
-        <div className="grid gap-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500">שם</span>
-            <span className="font-medium">{appt.name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">שירות</span>
-            <span className="font-medium">{appt.service}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">משך</span>
-            <span>{appt.duration} דקות</span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-gray-500">תאריך</span>
-            <span className="font-medium text-left">{formatDateHe(appt.date)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">שעה</span>
-            <span className="font-bold text-blue-700 text-base">{appt.time}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Customer cancel */}
-      {isConfirmed && (
-        <div className="text-center">
-          {!confirmOpen ? (
-            <button onClick={() => setConfirmOpen(true)}
-              className="text-sm text-gray-400 hover:text-red-500 transition-colors underline">
-              ביטול התור
-            </button>
-          ) : (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="font-medium text-red-700 mb-3">האם לבטל את התור?</p>
-              <p className="text-sm text-red-500 mb-4">לא ניתן לבטל פעולה זו</p>
-              <div className="flex gap-3">
-                <button onClick={() => setConfirmOpen(false)}
-                  className="flex-1 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                  חזרה
-                </button>
-                <button onClick={handleCancel} disabled={cancelling}
-                  className="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
-                  {cancelling ? 'מבטל...' : 'אשר ביטול'}
-                </button>
+        {/* ── Status banner: cancelled by admin ── */}
+        {isCancelledAdmin && (
+          <div className="rounded-2xl p-5 mb-6 text-center border"
+            style={{ background: 'rgba(30,23,18,0.95)', borderColor: 'rgba(149,18,44,0.35)' }}>
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(149,18,44,0.15)' }}>
+              <svg className="w-5 h-5 text-terra-light" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p className="font-bold text-brown text-lg">התור שלך בוטל</p>
+            <p className="text-brown-mid text-sm mt-1">התור בוטל על ידי העסק</p>
+            {appt.cancel_reason && (
+              <div className="mt-3 rounded-xl p-3 text-sm text-brown-mid"
+                style={{ background: 'rgba(46,34,24,0.6)' }}>
+                <span className="font-medium text-brown">סיבת הביטול: </span>
+                {appt.cancel_reason}
               </div>
+            )}
+            <div className="mt-5">
+              <a href="/"
+                className="btn-crimson inline-block px-6 py-2.5 rounded-full text-white text-sm font-medium">
+                הזמינו תור חדש
+              </a>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      <div className="mt-10 text-center">
-        <a href="/" className="text-xs text-gray-300 hover:text-gray-500">← חזרה לדף הבית</a>
+        {/* ── Status banner: cancelled by customer ── */}
+        {isCancelledCustomer && (
+          <div className="rounded-2xl p-5 mb-6 text-center border"
+            style={{ background: 'rgba(30,23,18,0.95)', borderColor: 'rgba(46,34,24,0.8)' }}>
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(94,78,68,0.25)' }}>
+              <svg className="w-5 h-5 text-brown-mid" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <p className="font-bold text-brown text-lg">ביטלת את התור</p>
+            <div className="mt-5">
+              <a href="/"
+                className="btn-crimson inline-block px-6 py-2.5 rounded-full text-white text-sm font-medium">
+                הזמינו תור חדש
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* ── Status banner: completed ── */}
+        {isCompleted && (
+          <div className="rounded-2xl p-5 mb-6 text-center border"
+            style={{ background: 'rgba(30,23,18,0.95)', borderColor: 'rgba(201,169,110,0.28)' }}>
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(201,169,110,0.15)' }}>
+              <svg className="w-5 h-5 text-amber" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <p className="font-bold text-brown text-lg">התור הושלם</p>
+            <p className="text-brown-mid text-sm mt-1">תודה שביקרת אצלנו!</p>
+            <div className="mt-5">
+              <a href="/"
+                className="btn-crimson inline-block px-6 py-2.5 rounded-full text-white text-sm font-medium">
+                הזמינו תור נוסף
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Appointment details */}
+        <div className="bg-sand border border-border rounded-2xl p-5 mb-6">
+          <p className="text-xs text-brown-light font-medium mb-4 uppercase tracking-widest">
+            פרטי התור
+          </p>
+          <div className="grid gap-0 text-sm divide-y divide-border/40">
+            <div className="flex justify-between items-center py-3">
+              <span className="text-brown-mid">שם</span>
+              <span className="font-medium text-brown">{appt.name}</span>
+            </div>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-brown-mid">שירות</span>
+              <span className="font-medium text-brown">{appt.service}</span>
+            </div>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-brown-mid">משך</span>
+              <span className="text-brown">{appt.duration} דקות</span>
+            </div>
+            <div className="flex justify-between items-start py-3">
+              <span className="text-brown-mid shrink-0 ml-4">תאריך</span>
+              <span className="font-medium text-brown text-left">{formatDateHe(appt.date)}</span>
+            </div>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-brown-mid">שעה</span>
+              <span className="font-bold text-terra-light text-lg tracking-wider">{appt.time}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Customer cancel */}
+        {isConfirmed && (
+          <div className="text-center">
+            {!confirmOpen ? (
+              <button
+                onClick={() => setConfirmOpen(true)}
+                className="text-sm text-brown-light hover:text-terra transition-colors underline underline-offset-2">
+                ביטול התור
+              </button>
+            ) : (
+              <div className="rounded-2xl p-5 border"
+                style={{ background: 'rgba(30,23,18,0.97)', borderColor: 'rgba(149,18,44,0.30)' }}>
+                <p className="font-medium text-brown mb-2">האם לבטל את התור?</p>
+                <p className="text-sm text-brown-mid mb-5">לא ניתן לבטל פעולה זו</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmOpen(false)}
+                    className="flex-1 py-2.5 border border-border rounded-xl text-sm
+                      text-brown-mid hover:border-brown-mid/40 transition-colors">
+                    חזרה
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="btn-crimson flex-1 py-2.5 text-white rounded-xl text-sm font-medium">
+                    {cancelling ? 'מבטל...' : 'אשר ביטול'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-12 text-center">
+          <a href="/" className="text-xs text-brown-light hover:text-terra transition-colors">
+            ← חזרה לדף הבית
+          </a>
+        </div>
+
       </div>
     </main>
   );
