@@ -121,6 +121,7 @@ export default function HomePage() {
   const [phone,        setPhone]        = useState('');
   const [phoneError,   setPhoneError]   = useState('');
   const [availability, setAvailability] = useState<Availability | null>(null);
+  const [availabilityError, setAvailabilityError] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [loading,      setLoading]      = useState(false);
   const [bookingToken, setBookingToken] = useState('');
@@ -163,8 +164,18 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!date) { setAvailability(null); return; }
-    fetch(`/api/availability?date=${date}`).then(r => r.json()).then(setAvailability);
+    if (!date) { setAvailability(null); setAvailabilityError(false); return; }
+    setAvailabilityError(false);
+    fetch(`/api/availability?date=${date}`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(setAvailability)
+      .catch(err => {
+        console.error('[availability] fetch failed:', err);
+        setAvailabilityError(true);
+      });
   }, [date]);
 
   useEffect(() => {
@@ -237,7 +248,7 @@ export default function HomePage() {
   function reset() {
     setStep('service'); setServiceId(null); setDate(''); setTime('');
     setName(''); setPhone(''); setPhoneError(''); setBookingError('');
-    setAvailability(null); setBookingToken(''); setLinkCopied(false);
+    setAvailability(null); setAvailabilityError(false); setBookingToken(''); setLinkCopied(false);
   }
 
   function copyLink() {
@@ -815,7 +826,7 @@ export default function HomePage() {
                       <>
                         <label className="block text-sm font-medium text-brown-mid mb-2">שעה פנויה</label>
                         {availableSlots.length === 0 ? (
-                          <p className="text-red-400 text-sm py-2">אין שעות פנויות בתאריך זה</p>
+                          <p className="text-brown-mid text-sm py-2">אין שעות פנויות בתאריך הזה. נסו לבחור תאריך אחר.</p>
                         ) : (
                           <div className="grid grid-cols-3 gap-2" role="listbox" aria-label="שעות פנויות">
                             {availableSlots.map(slot => (
@@ -841,8 +852,11 @@ export default function HomePage() {
                   </>
                 )}
 
-                {date && !availability && (
+                {date && !availability && !availabilityError && (
                   <p className="text-brown-light text-sm">טוען זמינות...</p>
+                )}
+                {availabilityError && (
+                  <p className="text-red-400 text-sm py-2">שגיאה בטעינת הזמינות. אנא נסו שנית.</p>
                 )}
 
                 <div className="flex gap-3 mt-7">

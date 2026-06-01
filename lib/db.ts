@@ -84,10 +84,19 @@ export function getDb(): Database.Database {
     }
     const { cnt } = global._db.prepare('SELECT COUNT(*) as cnt FROM services').get() as { cnt: number };
     if (cnt === 0) {
-      const ins = global._db.prepare('INSERT INTO services (name, duration, active, sort_order) VALUES (?, ?, 1, ?)');
-      ins.run('תספורת', 30, 0);
-      ins.run('עיצוב זקן', 20, 1);
-      ins.run('תספורת + זקן', 50, 2);
+      const ins = global._db.prepare('INSERT INTO services (name, duration, price, active, sort_order) VALUES (?, ?, ?, 1, ?)');
+      ins.run('תספורת גברית', 30, 80,  0);
+      ins.run('עיצוב זקן',    20, 50,  1);
+      ins.run('תספורת + זקן', 45, 120, 2);
+      ins.run('תספורת ילד',   25, 60,  3);
+    } else {
+      // Backfill prices for services seeded without price
+      try {
+        global._db.prepare("UPDATE services SET name = 'תספורת גברית', price = 80  WHERE name = 'תספורת'        AND price IS NULL").run();
+        global._db.prepare("UPDATE services SET price = 50  WHERE name = 'עיצוב זקן'                             AND price IS NULL").run();
+        global._db.prepare("UPDATE services SET price = 120, duration = 45 WHERE name = 'תספורת + זקן'           AND price IS NULL").run();
+        global._db.prepare("UPDATE services SET price = 60  WHERE name IN ('תספורת ילד','תספורת נשים')           AND price IS NULL").run();
+      } catch {}
     }
   }
   return global._db;
