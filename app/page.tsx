@@ -2,11 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ScrollVideoHero from '@/app/components/ScrollVideoHero';
-import { generateSlots, timeToMinutes, hasOverlap, isValidIsraeliPhone } from '@/lib/services';
+import { isValidIsraeliPhone } from '@/lib/services';
 import type { Service } from '@/lib/services';
-import type { Appointment } from '@/app/api/appointments/route';
-import type { BlockedRange } from '@/app/api/blocked-ranges/route';
-import type { Settings } from '@/app/api/settings/route';
 
 /* ─── Fallback services ────────────────────────────────────────────────────
    Used when the API is unavailable (e.g. serverless env without SQLite).
@@ -19,14 +16,6 @@ const FALLBACK_SERVICES: Service[] = [
 ];
 
 type Step = 'service' | 'datetime' | 'details' | 'done';
-
-interface Availability {
-  settings:      Settings;
-  nonWorkingDay: boolean;
-  dayOff:        boolean;
-  booked:        Appointment[];
-  blockedRanges: BlockedRange[];
-}
 
 /* ─── Scissors SVG ─────────────────────────────────────────────────────── */
 function ScissorsIcon({ className }: { className?: string }) {
@@ -120,7 +109,7 @@ export default function HomePage() {
   const [name,         setName]         = useState('');
   const [phone,        setPhone]        = useState('');
   const [phoneError,   setPhoneError]   = useState('');
-  const [availability, setAvailability] = useState<Availability | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[] | null>(null);
   const [availabilityError, setAvailabilityError] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [loading,      setLoading]      = useState(false);
@@ -164,19 +153,31 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!date) { setAvailability(null); setAvailabilityError(false); return; }
+    if (!date || !service) {
+      setAvailableSlots(null);
+      setAvailabilityError(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    setAvailableSlots(null);
     setAvailabilityError(false);
-    fetch(`/api/availability?date=${date}`)
+    fetch(`/api/availability?date=${date}&duration=${service.duration}`, { signal: ctrl.signal })
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then(setAvailability)
+      .then((data: { slots: string[] }) => {
+        if (!Array.isArray(data.slots)) throw new Error('unexpected response shape');
+        setAvailableSlots(data.slots);
+      })
       .catch(err => {
+        if (err.name === 'AbortError') return;
         console.error('[availability] fetch failed:', err);
         setAvailabilityError(true);
       });
-  }, [date]);
+    return () => ctrl.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, service?.id]);
 
   useEffect(() => {
     const el = bookingRef.current;
@@ -189,27 +190,6 @@ export default function HomePage() {
     return () => obs.disconnect();
   }, []);
 
-  /* ── Slot computation ───────────────────────────────────────────────── */
-  const availableSlots: string[] = (() => {
-    if (!service || !availability) return [];
-    const { settings, nonWorkingDay, dayOff, booked, blockedRanges } = availability;
-    if (nonWorkingDay || dayOff) return [];
-    const closeMins = settings.close_hour * 60;
-    return generateSlots(settings.open_hour, settings.close_hour).filter(slot => {
-      const start = timeToMinutes(slot);
-      const end   = start + service.duration;
-      if (end > closeMins) return false;
-      if (date === today) {
-        const now = new Date();
-        if (start <= now.getHours() * 60 + now.getMinutes()) return false;
-      }
-      if (blockedRanges.some(r => {
-        const rs = timeToMinutes(r.start_time);
-        return hasOverlap(start, service.duration, rs, timeToMinutes(r.end_time) - rs);
-      })) return false;
-      return !booked.some(b => hasOverlap(start, service.duration, timeToMinutes(b.time), b.duration));
-    });
-  })();
 
   /* ── Handlers ───────────────────────────────────────────────────────── */
   function handlePhoneChange(val: string) {
@@ -248,7 +228,7 @@ export default function HomePage() {
   function reset() {
     setStep('service'); setServiceId(null); setDate(''); setTime('');
     setName(''); setPhone(''); setPhoneError(''); setBookingError('');
-    setAvailability(null); setAvailabilityError(false); setBookingToken(''); setLinkCopied(false);
+    setAvailableSlots(null); setAvailabilityError(false); setBookingToken(''); setLinkCopied(false);
   }
 
   function copyLink() {
@@ -261,7 +241,7 @@ export default function HomePage() {
       setServiceId(initialServiceId);
       setStep('datetime');
       setDate(''); setTime('');
-      setAvailability(null); setBookingError(''); setPhoneError('');
+      setAvailableSlots(null); setAvailabilityError(false); setBookingError(''); setPhoneError('');
     }
     setTimeout(() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40);
     setMenuOpen(false);
@@ -808,51 +788,39 @@ export default function HomePage() {
                   type="date"
                   min={today}
                   value={date}
-                  onChange={e => { setDate(e.target.value); setTime(''); }}
+                  onChange={e => { setDate(e.target.value); setTime(''); setAvailableSlots(null); setAvailabilityError(false); }}
                   className="w-full border-2 rounded-2xl p-3 mb-6 text-base input-dark transition-all"
                 />
 
-                {date && availability && (
+                {date && availableSlots !== null && availableSlots.length === 0 && (
+                  <p className="text-brown-mid text-sm py-2">אין שעות פנויות בתאריך הזה. נסו לבחור תאריך אחר.</p>
+                )}
+
+                {date && availableSlots !== null && availableSlots.length > 0 && (
                   <>
-                    {(availability.nonWorkingDay || availability.dayOff) && (
-                      <div
-                        className="rounded-2xl p-3 mb-4 text-center text-brown-mid text-sm border"
-                        style={{ background: 'rgba(201,169,110,0.07)', borderColor: 'rgba(201,169,110,0.25)' }}
-                      >
-                        {availability.nonWorkingDay ? 'יום זה אינו יום עבודה' : 'יום זה מסומן כחופשה'}
-                      </div>
-                    )}
-                    {!availability.nonWorkingDay && !availability.dayOff && (
-                      <>
-                        <label className="block text-sm font-medium text-brown-mid mb-2">שעה פנויה</label>
-                        {availableSlots.length === 0 ? (
-                          <p className="text-brown-mid text-sm py-2">אין שעות פנויות בתאריך הזה. נסו לבחור תאריך אחר.</p>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-2" role="listbox" aria-label="שעות פנויות">
-                            {availableSlots.map(slot => (
-                              <button
-                                key={slot}
-                                role="option"
-                                aria-selected={time === slot}
-                                onClick={() => setTime(slot)}
-                                className={`py-3 rounded-2xl border-2 font-semibold text-sm transition-all ${
-                                  time === slot
-                                    ? 'border-terra bg-terra text-white'
-                                    : 'border-border/60 text-brown-mid hover:border-terra/40 hover:bg-terra/5'
-                                }`}
-                                style={time === slot ? { boxShadow: '0 4px 16px rgba(149,18,44,0.4)' } : {}}
-                              >
-                                {slot}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    )}
+                    <label className="block text-sm font-medium text-brown-mid mb-2">שעה פנויה</label>
+                    <div className="grid grid-cols-3 gap-2" role="listbox" aria-label="שעות פנויות">
+                      {availableSlots.map(slot => (
+                        <button
+                          key={slot}
+                          role="option"
+                          aria-selected={time === slot}
+                          onClick={() => setTime(slot)}
+                          className={`py-3 rounded-2xl border-2 font-semibold text-sm transition-all ${
+                            time === slot
+                              ? 'border-terra bg-terra text-white'
+                              : 'border-border/60 text-brown-mid hover:border-terra/40 hover:bg-terra/5'
+                          }`}
+                          style={time === slot ? { boxShadow: '0 4px 16px rgba(149,18,44,0.4)' } : {}}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
                   </>
                 )}
 
-                {date && !availability && !availabilityError && (
+                {date && availableSlots === null && !availabilityError && (
                   <p className="text-brown-light text-sm">טוען זמינות...</p>
                 )}
                 {availabilityError && (
