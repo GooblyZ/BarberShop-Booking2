@@ -8,6 +8,16 @@ import type { Appointment } from '@/app/api/appointments/route';
 import type { BlockedRange } from '@/app/api/blocked-ranges/route';
 import type { Settings } from '@/app/api/settings/route';
 
+/* ─── Fallback services ────────────────────────────────────────────────────
+   Used when the API is unavailable (e.g. serverless env without SQLite).
+   Real DB data takes priority — fallback only kicks in on error/empty.     */
+const FALLBACK_SERVICES: Service[] = [
+  { id: 1, name: 'תספורת גברית',  duration: 30, price: 80,  active: 1, sort_order: 0 },
+  { id: 2, name: 'עיצוב זקן',      duration: 20, price: 50,  active: 1, sort_order: 1 },
+  { id: 3, name: 'תספורת + זקן',   duration: 45, price: 120, active: 1, sort_order: 2 },
+  { id: 4, name: 'תספורת ילד',     duration: 25, price: 60,  active: 1, sort_order: 3 },
+];
+
 type Step = 'service' | 'datetime' | 'details' | 'done';
 
 interface Availability {
@@ -96,7 +106,8 @@ function AnimCounter({ target, suffix = '' }: { target: number; suffix?: string 
 ═══════════════════════════════════════════════════════════════════════════ */
 export default function HomePage() {
   /* ── Shared state ───────────────────────────────────────────────────── */
-  const [services,  setServices]  = useState<Service[]>([]);
+  const [services,     setServices]     = useState<Service[]>([]);
+  const [servicesFetched, setServicesFetched] = useState(false);
   const [scrolled,  setScrolled]  = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
   const bookingRef = useRef<HTMLElement>(null);
@@ -121,7 +132,19 @@ export default function HomePage() {
 
   /* ── Data fetching ──────────────────────────────────────────────────── */
   useEffect(() => {
-    fetch('/api/services?active=1').then(r => r.json()).then(setServices);
+    fetch('/api/services?active=1')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data: Service[]) => {
+        setServices(Array.isArray(data) && data.length > 0 ? data : FALLBACK_SERVICES);
+      })
+      .catch(() => {
+        // API unavailable (e.g. serverless without SQLite) — fall back to demo list
+        setServices(FALLBACK_SERVICES);
+      })
+      .finally(() => setServicesFetched(true));
   }, []);
 
   useEffect(() => {
@@ -340,8 +363,8 @@ export default function HomePage() {
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
               { target: 500, suffix: '+', label: 'לקוחות מרוצים' },
-              { target: 10,  suffix: '+', label: 'שנות ניסיון'    },
-              { target: 49,  suffix: '',  label: 'דירוג ממוצע',  star: true },
+              { target: 7,   suffix: '+', label: 'שנות ניסיון'    },
+              { target: 4,   suffix: '',  label: 'דירוג ממוצע',  star: true },
             ].map(({ target, suffix, label, star }) => (
               <div key={label} className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-1.5">
@@ -588,7 +611,7 @@ export default function HomePage() {
               {
                 n: '03',
                 title: 'אשרו ובואו',
-                desc:  'הכניסו שם וטלפון, אשרו את התור — ופגישו אותנו בזמן',
+                desc:  'הכניסו שם וטלפון, אשרו את התור — והגיעו אלינו בזמן',
                 icon: (
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
@@ -727,7 +750,7 @@ export default function HomePage() {
               <div>
                 <h3 className="font-serif font-bold text-2xl text-brown mb-6">בחרו שירות</h3>
                 <div className="grid gap-3" role="listbox" aria-label="בחירת שירות">
-                  {services.length === 0 && (
+                  {!servicesFetched && (
                     <>
                       {[1,2,3].map(i => <div key={i} className="bg-sand/40 rounded-2xl h-16 animate-pulse" />)}
                     </>
@@ -1086,8 +1109,9 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold text-white/80 text-sm uppercase tracking-widest mb-4">יצירת קשר</h4>
               <div className="text-sm space-y-2 text-white/45 mb-6">
-                <p>050-123-4567</p>
+                <p>050-444-7823</p>
                 <p>רחוב פלורנטין 12, תל אביב</p>
+                <p className="text-white/25 text-xs">ניתן להזמין גם בוואטסאפ</p>
               </div>
               <div className="flex flex-col gap-2 text-sm">
                 <a href="#services" className="text-white/40 hover:text-white/75 transition-colors">שירותים</a>
@@ -1098,11 +1122,10 @@ export default function HomePage() {
           </div>
 
           <div
-            className="pt-6 flex items-center justify-between text-xs text-white/20"
+            className="pt-6 text-center text-xs text-white/20"
             style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
           >
             <span>© {new Date().getFullYear()} מספרת פלורנטין. כל הזכויות שמורות.</span>
-            <a href="/admin" className="hover:text-white/45 transition-colors">ניהול</a>
           </div>
         </div>
       </footer>

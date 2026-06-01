@@ -90,8 +90,47 @@ export default function AboutPage() {
           ))}
         </div>
 
+        {/* About story */}
+        <div
+          className="mt-16 rounded-3xl p-8 md:p-12"
+          style={{
+            background: 'linear-gradient(145deg, rgba(40,30,22,0.96) 0%, rgba(24,17,12,0.99) 100%)',
+            border: '1px solid rgba(149,18,44,0.22)',
+          }}
+        >
+          <div className="max-w-2xl mx-auto text-center">
+            <span className="text-terra text-[10px] font-bold uppercase tracking-[0.22em] block mb-4">הסיפור שלנו</span>
+            <h2 className="font-serif font-black text-2xl md:text-3xl text-brown mb-6 leading-snug">
+              מספרת פלורנטין — יותר מסתם תספורת
+            </h2>
+            <p className="text-brown-mid text-sm leading-relaxed mb-5">
+              אנחנו מספרה שכונתית בלב תל אביב, עם למעלה מ-7 שנות ניסיון בענף. אצלנו כל לקוח מקבל יחס
+              אישי, תשומת לב לפרטים הקטנים ביותר, ותוצאה שתגרום לכם לחייך בפעם הבאה שתסתכלו במראה.
+            </p>
+            <p className="text-brown-mid text-sm leading-relaxed mb-8">
+              אנחנו מקפידים על ניקיון ותברואה ברמה הגבוהה ביותר, על דיוק בזמנים ועל
+              אווירה נעימה שתרגישו בה בנוח — בין אם זו הפעם הראשונה שלכם אצלנו ובין אם אתם לקוחות ותיקים.
+              מערכת ההזמנות המקוונת שלנו מאפשרת לכם לקבוע תור בקלות, בכל שעה, ללא שיחות טלפון.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+              {[
+                { icon: '✂️', label: 'תספורת מקצועית' },
+                { icon: '🧼', label: 'ניקיון ותברואה' },
+                { icon: '⏱️', label: 'דיוק בזמנים'    },
+                { icon: '💬', label: 'יחס אישי'        },
+              ].map(({ icon, label }) => (
+                <div key={label} className="flex flex-col items-center gap-2 p-3 rounded-2xl"
+                  style={{ background: 'rgba(149,18,44,0.07)', border: '1px solid rgba(149,18,44,0.14)' }}>
+                  <span className="text-2xl">{icon}</span>
+                  <span className="text-brown-mid text-xs font-medium text-center leading-tight">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* CTA */}
-        <div className="text-center mt-16">
+        <div className="text-center mt-12">
           <Link
             href="/#booking"
             className="btn-crimson text-white px-10 py-4 rounded-full text-lg font-bold inline-block"
