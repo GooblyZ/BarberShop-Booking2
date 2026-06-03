@@ -751,7 +751,7 @@ export default function HomePage() {
                       key={s.id}
                       role="option"
                       aria-selected={serviceId === s.id}
-                      onClick={() => { setServiceId(s.id); setStep('datetime'); setDate(''); setTime(''); setAvailability(null); }}
+                      onClick={() => { setServiceId(s.id); setStep('datetime'); setDate(''); setTime(''); setAvailableSlots(null); setAvailabilityError(false); }}
                       className={`w-full text-right rounded-2xl p-4 transition-all border-2 ${
                         serviceId === s.id
                           ? 'border-terra bg-terra/8'
